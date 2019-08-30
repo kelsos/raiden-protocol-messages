@@ -2,10 +2,14 @@ from eth_utils import decode_hex, encode_hex
 from raiden.messages.abstract import SignedMessage
 from raiden.messages.matrix import ToDevice
 from raiden.messages.metadata import Metadata, RouteMetadata
-from raiden.messages.transfers import LockExpired, Unlock, RefundTransfer, Lock, LockedTransfer
+from raiden.messages.synchronization import Processed, Delivered
+from raiden.messages.transfers import LockExpired, Unlock, RefundTransfer, Lock, LockedTransfer, SecretRequest, \
+    RevealSecret
 from raiden.messages.withdraw import WithdrawRequest, WithdrawConfirmation, WithdrawExpired
 from raiden.storage.serialization import JSONSerializer
+from raiden.transfer.utils import hash_balance_data
 from raiden.utils.signer import LocalSigner
+import json
 
 private_key = decode_hex('0x0123456789012345678901234567890123456789012345678901234567890123')
 signer = LocalSigner(private_key)
@@ -19,15 +23,49 @@ def print_information(message: SignedMessage):
     if hasattr(message, 'message_hash'):
         print(f'message hash: {encode_hex(message.message_hash)}')
 
+    if hasattr(message, 'transferred_amount') and hasattr(message, 'locked_amount') and hasattr(message, 'locksroot'):
+        balance_hash = hash_balance_data(message.transferred_amount, message.locked_amount, message.locksroot)
+        print(f'balance hash: {encode_hex(balance_hash)}')
+
+    if hasattr(message, 'metadata'):
+        print(f'metadata hash: {encode_hex(message.metadata.hash)}')
+
     print(f'packed: {encode_hex(packed)}')
     print(f'signature: {encode_hex(signature)}')
 
     message.signature = signature
 
-    print(f'message: {JSONSerializer.serialize(message)}')
+    serialized_message = JSONSerializer.serialize(message)
+    deserialized_message = json.loads(serialized_message)
+    print(f'\nmessage:\n {json.dumps(deserialized_message, sort_keys=True, indent=4)}')
 
     print('\n---------------------------\n')
 
+
+delivered = Delivered(
+    delivered_message_identifier=123456,
+    signature=''
+)
+
+processed = Processed(
+    message_identifier=123456,
+    signature=''
+)
+
+secret_reveal = RevealSecret(
+    message_identifier=123456,
+    secret=decode_hex('0x3bc51dd335dda4f6aee24b3f88d88c5ee0b0d43aea4ed25a384531ce29fb062e'),
+    signature=''
+)
+
+secret_request = SecretRequest(
+    message_identifier=123456,
+    payment_identifier=1,
+    secrethash=decode_hex('0x59cad5948673622c1d64e2322488bf01619f7ff45789741b15a9f782ce9290a8'),
+    amount=10,
+    expiration=1,
+    signature=''
+)
 
 locked_transfer = LockedTransfer(
     chain_id=337,
@@ -157,8 +195,10 @@ withdraw_expired = WithdrawExpired(
 
 )
 
-# TODO add missing messages: Processed,Delivered,SecretRequest,SecretReveal
-
+print_information(delivered)
+print_information(processed)
+print_information(secret_reveal)
+print_information(secret_request)
 print_information(locked_transfer)
 print_information(refund_transfer)
 print_information(unlock)
