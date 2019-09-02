@@ -6,7 +6,7 @@ from raiden.messages.synchronization import Processed, Delivered
 from raiden.messages.transfers import LockExpired, Unlock, RefundTransfer, Lock, LockedTransfer, SecretRequest, \
     RevealSecret
 from raiden.messages.withdraw import WithdrawRequest, WithdrawConfirmation, WithdrawExpired
-from raiden.storage.serialization import JSONSerializer
+from raiden.storage.serialization.serializer import MessageSerializer
 from raiden.transfer.utils import hash_balance_data
 from raiden.utils.signer import LocalSigner
 import json
@@ -35,7 +35,7 @@ def print_information(message: SignedMessage):
 
     message.signature = signature
 
-    serialized_message = JSONSerializer.serialize(message)
+    serialized_message = MessageSerializer.serialize(message)
     deserialized_message = json.loads(serialized_message)
     print(f'\nmessage:\n {json.dumps(deserialized_message, sort_keys=True, indent=4)}')
 

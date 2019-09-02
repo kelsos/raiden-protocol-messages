@@ -1,2 +1,2 @@
-raiden==0.100.5a0
+raiden
 eth-utils=1.6.4
