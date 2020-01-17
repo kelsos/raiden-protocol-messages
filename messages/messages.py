@@ -1,6 +1,7 @@
-from eth_utils import decode_hex, encode_hex
+from datetime import datetime
+
+from eth_utils import decode_hex, encode_hex, to_hex
 from raiden.messages.abstract import SignedMessage
-from raiden.messages.matrix import ToDevice
 from raiden.messages.metadata import Metadata, RouteMetadata
 from raiden.messages.synchronization import Processed, Delivered
 from raiden.messages.transfers import LockExpired, Unlock, RefundTransfer, Lock, LockedTransfer, SecretRequest, \
@@ -10,6 +11,8 @@ from raiden.storage.serialization.serializer import MessageSerializer
 from raiden.transfer.utils import hash_balance_data
 from raiden.utils.signer import LocalSigner
 import json
+
+from web3 import Web3
 
 private_key = decode_hex('0x0123456789012345678901234567890123456789012345678901234567890123')
 signer = LocalSigner(private_key)
@@ -40,6 +43,16 @@ def print_information(message: SignedMessage):
     print(f'\nmessage:\n {json.dumps(deserialized_message, sort_keys=True, indent=4)}')
 
     print('\n---------------------------\n')
+
+
+def print_iou_request():
+    sender = decode_hex('0x540B51eDc5900B8012091cc7c83caf2cb243aa86')
+    receiver = decode_hex('0x94DEe8e391410A9ebbA791B187df2d993212c849')
+    timestamp = '2019-11-07T14:08:52'
+    signature_data = sender + receiver + Web3.toBytes(text=timestamp)
+    signature = to_hex(signer.sign(signature_data))
+
+    print(f'\nIOU: request\n signature: {signature} -- data: {to_hex(signature_data)} -- time: {timestamp} -- timebytes: {to_hex(Web3.toBytes(text=timestamp))}')
 
 
 delivered = Delivered(
@@ -86,7 +99,6 @@ locked_transfer = LockedTransfer(
     ),
     target=decode_hex('0x811957b07304d335B271feeBF46754696694b09e'),
     initiator=decode_hex('0x540B51eDc5900B8012091cc7c83caf2cb243aa86'),
-    fee=0,
     metadata=(Metadata(routes=[(RouteMetadata(
         route=[
             decode_hex('0x2A915FDA69746F515b46C520eD511401d5CCD5e2'),
@@ -115,7 +127,6 @@ refund_transfer = RefundTransfer(
     ),
     target=decode_hex('0x540B51eDc5900B8012091cc7c83caf2cb243aa86'),
     initiator=decode_hex('0x2A915FDA69746F515b46C520eD511401d5CCD5e2'),
-    fee=0,
     metadata=(Metadata(routes=[(RouteMetadata(
         route=[
             decode_hex('0x540B51eDc5900B8012091cc7c83caf2cb243aa86'),
@@ -149,11 +160,6 @@ lock_expired = LockExpired(
     secrethash=decode_hex('0xfdd5831261497a4de31cb31d29b3cafe1fd2dfcdadf3c4a72ed0af9bb106934d'),
     locksroot=decode_hex('0x607e890c54e5ba67cd483bedae3ba9da9bf2ef2fbf237b9fb39a723b2296077b'),
     recipient=decode_hex('0x540B51eDc5900B8012091cc7c83caf2cb243aa86'),
-    signature=''
-)
-
-to_device = ToDevice(
-    message_identifier=123456,
     signature=''
 )
 
@@ -203,7 +209,8 @@ print_information(locked_transfer)
 print_information(refund_transfer)
 print_information(unlock)
 print_information(lock_expired)
-print_information(to_device)
 print_information(withdraw_request)
 print_information(withdraw_confirmation)
 print_information(withdraw_expired)
+
+print_iou_request()

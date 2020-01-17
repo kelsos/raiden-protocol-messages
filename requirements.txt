@@ -1,2 +1,2 @@
 raiden
-eth-utils=1.6.4
+eth-utils==1.6.4
